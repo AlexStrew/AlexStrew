@@ -21,21 +21,14 @@ jobs:
         id: date
         run: echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
       
-      - name: Download cat image
-        id: download-cat
+      - name: Generate cat image URL
+        id: cat-image
         run: |
-          # Скачиваем картинку кота
-          curl -o "cat-${{ steps.date.outputs.date }}.jpg" "https://cataas.com/cat"
-          
-          # Проверяем, что файл скачался успешно
-          if [ -f "cat-${{ steps.date.outputs.date }}.jpg" ]; then
-            echo "filename=cat-${{ steps.date.outputs.date }}.jpg" >> $GITHUB_OUTPUT
-            echo "✅ Cat image downloaded successfully"
-            ls -la "cat-${{ steps.date.outputs.date }}.jpg"
-          else
-            echo "❌ Failed to download cat image"
-            exit 1
-          fi
+          # Генерируем уникальный URL для картинки кота с параметрами
+          timestamp=$(date +%s)
+          cat_url="https://cataas.com/cat?timestamp=${timestamp}"
+          echo "cat_url=${cat_url}" >> $GITHUB_OUTPUT
+          echo "✅ Generated cat image URL: ${cat_url}"
       
       - name: Generate cat facts
         id: cat-facts
@@ -177,6 +170,8 @@ jobs:
           body: |
             # 🐾 Ежедневная порция котиков!
             
+            ![Котик дня](${{ steps.cat-image.outputs.cat_url }})
+            
             **Дата:** ${{ steps.date.outputs.date }}
             
             **Интересный факт о котах:** ${{ steps.cat-facts.outputs.fact }}
@@ -186,15 +181,12 @@ jobs:
             Эта милая картинка была автоматически получена с [cataas.com](https://cataas.com/) 📸
             
             > *Каждый день новый котик для поднятия настроения! 🌟*
-          files: |
-            ${{ steps.download-cat.outputs.filename }}
           draft: false
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
-      - name: Cleanup
+      - name: Success message
         run: |
-          # Удаляем скачанный файл, чтобы не засорять runner
-          rm -f "cat-${{ steps.date.outputs.date }}.jpg"
-          echo "🧹 Cleanup completed"
+          echo "🎉 Successfully created release with cat image!"
+          echo "🐱 Cat URL: ${{ steps.cat-image.outputs.cat_url }}"
